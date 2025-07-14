@@ -6,8 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
-	"time"
+        "strings"
 
 	"meshdump/internal/meshdump"
 )
@@ -53,12 +52,6 @@ func loadEnv() {
 func main() {
 	loadEnv()
 
-	nodesEnv := os.Getenv("NODES")
-	var nodes []string
-	if nodesEnv != "" {
-		nodes = strings.Split(nodesEnv, ",")
-	}
-	log.Printf("config: nodes=%v", nodes)
 
 	dataFile := os.Getenv("DATA_FILE")
 	log.Printf("config: data file=%s", dataFile)
@@ -80,9 +73,6 @@ func main() {
 		if err := meshdump.StartMQTT(ctx, mqttBroker, mqttTopic, mqttUser, mqttPass, store); err != nil {
 			log.Fatalf("mqtt: %v", err)
 		}
-	}
-	if len(nodes) > 0 {
-		go meshdump.PollNodes(ctx, time.Minute, store, nodes)
 	}
 
 	log.Println("Starting MeshDump on :8080")

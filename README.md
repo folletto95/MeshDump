@@ -4,8 +4,10 @@
 MeshDump collects telemetry from Meshtastic nodes and exposes the data through
 a small web interface. Data is typically ingested from an MQTT broker and the
 telemetry history is kept in memory. It can optionally be persisted to a file.
+
 The program uses the Eclipse Paho MQTT client library to connect to a broker
 and subscribe to telemetry topics.
+
 From the browser you can choose which node to inspect and view line charts of
 the available data types.
 
@@ -16,8 +18,7 @@ self-contained Windows binary while development and builds occur on Linux.
 Set `MQTT_BROKER` to the broker URL and, if required, `MQTT_USERNAME` and
 `MQTT_PASSWORD` for authentication. `MQTT_TOPIC` defaults to `#`.
 Nodes appear in the interface as soon as they publish telemetry, so you do not
-need to list them ahead of time. HTTP polling of nodes is only for testing and
-can be enabled by setting `NODES` to a comma separated list of IP addresses.
+need to list them ahead of time.
 
 If `DATA_FILE` is specified, telemetry and node metadata are stored in a small
 SQLite database at that path. The file is created automatically and reloaded on
