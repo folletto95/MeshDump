@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>MeshDump</title>
+</head>
+<body>
+<h1>MeshDump Telemetry</h1>
+<div id="content"></div>
+<script>
+async function load() {
+    const nodes = await fetch('/api/nodes').then(r => r.json());
+    const div = document.getElementById('content');
+    if (nodes.length === 0) {
+        div.innerText = 'No telemetry available yet.';
+        return;
+    }
+    for (const n of nodes) {
+        const data = await fetch('/api/telemetry/' + n).then(r => r.json());
+        const pre = document.createElement('pre');
+        pre.textContent = n + '\n' + JSON.stringify(data, null, 2);
+        div.appendChild(pre);
+    }
+}
+load();
+</script>
+</body>
+</html>
