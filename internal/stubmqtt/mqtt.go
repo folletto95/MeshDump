@@ -1,7 +1,9 @@
 package mqtt
 
 type ClientOptions struct {
-	broker string
+	broker   string
+	username string
+	password string
 }
 
 func NewClientOptions() *ClientOptions {
@@ -10,6 +12,16 @@ func NewClientOptions() *ClientOptions {
 
 func (o *ClientOptions) AddBroker(broker string) *ClientOptions {
 	o.broker = broker
+	return o
+}
+
+func (o *ClientOptions) SetUsername(u string) *ClientOptions {
+	o.username = u
+	return o
+}
+
+func (o *ClientOptions) SetPassword(p string) *ClientOptions {
+	o.password = p
 	return o
 }
 

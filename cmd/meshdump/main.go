@@ -25,13 +25,15 @@ func main() {
 	mqttBroker := os.Getenv("MQTT_BROKER")
 	mqttTopic := os.Getenv("MQTT_TOPIC")
 	if mqttTopic == "" {
-		mqttTopic = "telemetry/#"
+		mqttTopic = "#"
 	}
+	mqttUser := os.Getenv("MQTT_USERNAME")
+	mqttPass := os.Getenv("MQTT_PASSWORD")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	if mqttBroker != "" {
-		if err := meshdump.StartMQTT(ctx, mqttBroker, mqttTopic, store); err != nil {
+		if err := meshdump.StartMQTT(ctx, mqttBroker, mqttTopic, mqttUser, mqttPass, store); err != nil {
 			log.Fatalf("mqtt: %v", err)
 		}
 	}
