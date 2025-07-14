@@ -6,6 +6,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { font-family: sans-serif; margin: 20px; }
+        #nodeSelect { min-width: 200px; padding: 4px; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -52,12 +53,13 @@ async function init() {
     const nodes = await fetchNodes();
     for (const n of nodes) {
         const opt = document.createElement('option');
-        opt.value = opt.textContent = n;
+        opt.value = n.ID;
+        opt.textContent = n.LongName || n.ShortName || n.ID;
         select.appendChild(opt);
     }
     select.addEventListener('change', refresh);
     if (nodes.length) {
-        select.value = nodes[0];
+        select.value = nodes[0].ID;
         refresh();
         setInterval(refresh, 30000);
     }

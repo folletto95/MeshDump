@@ -17,8 +17,12 @@ Nodes appear in the interface as soon as they publish telemetry, so you do not
 need to list them ahead of time. HTTP polling of nodes is only for testing and
 can be enabled by setting `NODES` to a comma separated list of IP addresses.
 
-If `DATA_FILE` is specified, telemetry is also saved to that path and reloaded
-on startup so historical data is preserved across restarts.
+If `DATA_FILE` is specified, telemetry and node metadata are stored in a small
+SQLite database at that path. The file is created automatically and reloaded on
+startup so historical data is preserved across restarts.
+
+Set `DEBUG=1` to print additional information, including the list of nodes and
+their names, to the terminal.
 
 
 MeshDump automatically loads environment variables from a `.env` file. It first
