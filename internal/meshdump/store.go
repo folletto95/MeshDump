@@ -1,6 +1,8 @@
 package meshdump
 
 import (
+	"encoding/json"
+	"os"
 	"sync"
 	"time"
 )
@@ -15,16 +17,24 @@ type Telemetry struct {
 type Store struct {
 	mu   sync.Mutex
 	data map[string][]Telemetry
+	file string
 }
 
-func NewStore() *Store {
-	return &Store{data: make(map[string][]Telemetry)}
+func NewStore(path string) *Store {
+	s := &Store{data: make(map[string][]Telemetry), file: path}
+	if path != "" {
+		_ = s.load()
+	}
+	return s
 }
 
 func (s *Store) Add(t Telemetry) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.data[t.NodeID] = append(s.data[t.NodeID], t)
+	if s.file != "" {
+		_ = s.saveLocked()
+	}
 }
 
 func (s *Store) Get(nodeID string) []Telemetry {
@@ -51,4 +61,25 @@ func (s *Store) Nodes() []string {
 		nodes = append(nodes, k)
 	}
 	return nodes
+}
+
+func (s *Store) saveLocked() error {
+	b, err := json.MarshalIndent(s.data, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(s.file, b, 0644)
+}
+
+func (s *Store) load() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	b, err := os.ReadFile(s.file)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+	return json.Unmarshal(b, &s.data)
 }
