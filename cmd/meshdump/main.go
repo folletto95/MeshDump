@@ -11,7 +11,31 @@ import (
 	"meshdump/internal/meshdump"
 )
 
+func loadEnv(path string) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return
+	}
+	for _, line := range strings.Split(string(data), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		kv := strings.SplitN(line, "=", 2)
+		if len(kv) != 2 {
+			continue
+		}
+		key := strings.TrimSpace(kv[0])
+		val := strings.TrimSpace(kv[1])
+		if strings.HasPrefix(val, "\"") && strings.HasSuffix(val, "\"") && len(val) >= 2 {
+			val = strings.Trim(val, "\"")
+		}
+		os.Setenv(key, val)
+	}
+}
+
 func main() {
+	loadEnv(".env")
 	nodesEnv := os.Getenv("NODES")
 	var nodes []string
 	if nodesEnv != "" {
