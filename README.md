@@ -20,9 +20,12 @@ can be enabled by setting `NODES` to a comma separated list of IP addresses.
 If `DATA_FILE` is specified, telemetry is also saved to that path and reloaded
 on startup so historical data is preserved across restarts.
 
-MeshDump automatically loads environment variables from a `.env` file in the
-current directory if present, so you can place the above settings there for
-convenience.
+
+MeshDump automatically loads environment variables from a `.env` file. It first
+looks in the current working directory and then in the directory containing the
+executable. This lets you keep the configuration next to the binary when
+running it outside of the source tree.
+
 
 ## Building
 

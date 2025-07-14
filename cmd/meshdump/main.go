@@ -5,15 +5,31 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
 	"meshdump/internal/meshdump"
 )
 
-func loadEnv(path string) {
-	data, err := os.ReadFile(path)
-	if err != nil {
+func loadEnv() {
+	var paths []string
+	// first try the working directory
+	paths = append(paths, ".env")
+	// also try alongside the executable
+	if exe, err := os.Executable(); err == nil {
+		paths = append(paths, filepath.Join(filepath.Dir(exe), ".env"))
+	}
+
+	var data []byte
+	for _, p := range paths {
+		d, err := os.ReadFile(p)
+		if err == nil {
+			data = d
+			break
+		}
+	}
+	if len(data) == 0 {
 		return
 	}
 	for _, line := range strings.Split(string(data), "\n") {
@@ -35,7 +51,8 @@ func loadEnv(path string) {
 }
 
 func main() {
-	loadEnv(".env")
+	loadEnv()
+
 	nodesEnv := os.Getenv("NODES")
 	var nodes []string
 	if nodesEnv != "" {
