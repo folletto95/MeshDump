@@ -13,6 +13,7 @@ import (
 // Messages are expected to contain a JSON encoded Telemetry struct. Received
 // telemetry is stored in the provided Store until the context is cancelled.
 func StartMQTT(ctx context.Context, broker, topic, user, pass string, store *Store) error {
+	log.Printf("mqtt: connecting to %s", broker)
 	opts := mqtt.NewClientOptions().AddBroker(broker)
 	if user != "" {
 		opts.SetUsername(user).SetPassword(pass)
@@ -21,6 +22,7 @@ func StartMQTT(ctx context.Context, broker, topic, user, pass string, store *Sto
 	if t := client.Connect(); t.Wait() && t.Error() != nil {
 		return t.Error()
 	}
+	log.Printf("mqtt: connected, subscribing to %s", topic)
 
 	if t := client.Subscribe(topic, 0, func(c mqtt.Client, m mqtt.Message) {
 		var tel Telemetry
@@ -28,11 +30,13 @@ func StartMQTT(ctx context.Context, broker, topic, user, pass string, store *Sto
 			log.Printf("mqtt decode: %v", err)
 			return
 		}
+		log.Printf("mqtt: message from %s type=%s value=%f", tel.NodeID, tel.DataType, tel.Value)
 		store.Add(tel)
 	}); t.Wait() && t.Error() != nil {
 		client.Disconnect(250)
 		return t.Error()
 	}
+	log.Printf("mqtt: subscribed to %s", topic)
 
 	go func() {
 		<-ctx.Done()

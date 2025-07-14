@@ -17,8 +17,10 @@ func main() {
 	if nodesEnv != "" {
 		nodes = strings.Split(nodesEnv, ",")
 	}
+	log.Printf("config: nodes=%v", nodes)
 
 	dataFile := os.Getenv("DATA_FILE")
+	log.Printf("config: data file=%s", dataFile)
 	store := meshdump.NewStore(dataFile)
 	server := meshdump.NewServer(store)
 
@@ -29,6 +31,7 @@ func main() {
 	}
 	mqttUser := os.Getenv("MQTT_USERNAME")
 	mqttPass := os.Getenv("MQTT_PASSWORD")
+	log.Printf("config: mqtt broker=%s topic=%s", mqttBroker, mqttTopic)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

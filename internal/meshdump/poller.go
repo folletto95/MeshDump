@@ -18,11 +18,13 @@ func PollNodes(ctx context.Context, interval time.Duration, store *Store, nodes 
 			return
 		case <-ticker.C:
 			for _, n := range nodes {
+				log.Printf("poller: fetching telemetry from %s", n)
 				data, err := FetchTelemetry(n)
 				if err != nil {
 					log.Printf("fetch telemetry from %s: %v", n, err)
 					continue
 				}
+				log.Printf("poller: received %d entries from %s", len(data), n)
 				for _, t := range data {
 					store.Add(t)
 				}

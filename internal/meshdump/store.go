@@ -2,6 +2,7 @@ package meshdump
 
 import (
 	"encoding/json"
+	"log"
 	"os"
 	"sync"
 	"time"
@@ -31,6 +32,7 @@ func NewStore(path string) *Store {
 func (s *Store) Add(t Telemetry) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	log.Printf("store: add node=%s type=%s value=%f", t.NodeID, t.DataType, t.Value)
 	s.data[t.NodeID] = append(s.data[t.NodeID], t)
 	if s.file != "" {
 		_ = s.saveLocked()
