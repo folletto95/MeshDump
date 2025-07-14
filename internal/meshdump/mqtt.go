@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"log"
 
+
 	mqtt "meshdump/internal/simplemqtt"
+
 )
 
 // StartMQTT connects to the given broker and subscribes to the provided topic.
@@ -23,6 +25,9 @@ func StartMQTT(ctx context.Context, broker, topic, user, pass string, store *Sto
 		return t.Error()
 	}
 	log.Printf("mqtt: connected, subscribing to %s", topic)
+
+	// send a welcome message to verify connectivity
+	client.Publish("meshdump/welcome", 0, false, []byte("MeshDump connected"))
 
 	if t := client.Subscribe(topic, 0, func(c mqtt.Client, m mqtt.Message) {
 		var tel Telemetry
