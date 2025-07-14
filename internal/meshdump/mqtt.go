@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"log"
 
-	mqtt "meshdump/internal/stubmqtt"
+	mqtt "meshdump/internal/simplemqtt"
 )
 
 // StartMQTT connects to the given broker and subscribes to the provided topic.
