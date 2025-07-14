@@ -39,6 +39,7 @@ func (t *Token) Error() error { return t.err }
 type Client interface {
 	Connect() Token
 	Subscribe(topic string, qos byte, callback func(Client, Message)) Token
+	Publish(topic string, qos byte, retained bool, payload interface{}) Token
 	Disconnect(quiesce uint)
 }
 
@@ -55,6 +56,10 @@ func (c *client) Connect() Token {
 }
 
 func (c *client) Subscribe(topic string, qos byte, callback func(Client, Message)) Token {
+	return Token{}
+}
+
+func (c *client) Publish(topic string, qos byte, retained bool, payload interface{}) Token {
 	return Token{}
 }
 

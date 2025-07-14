@@ -24,6 +24,9 @@ func StartMQTT(ctx context.Context, broker, topic, user, pass string, store *Sto
 	}
 	log.Printf("mqtt: connected, subscribing to %s", topic)
 
+	// send a welcome message to verify connectivity
+	client.Publish("meshdump/welcome", 0, false, []byte("MeshDump connected"))
+
 	if t := client.Subscribe(topic, 0, func(c mqtt.Client, m mqtt.Message) {
 		var tel Telemetry
 		if err := json.Unmarshal(m.Payload(), &tel); err != nil {
