@@ -21,6 +21,7 @@ func FetchTelemetry(host string) ([]Telemetry, error) {
 	}
 	defer resp.Body.Close()
 
+
 	body, _ := io.ReadAll(resp.Body)
 
 	if resp.StatusCode != http.StatusOK {
