@@ -2,6 +2,5 @@ module meshdump
 
 go 1.20
 
-require (
-    github.com/eclipse/paho.mqtt.golang v1.3.5
-)
+// Local stub used in place of github.com/eclipse/paho.mqtt.golang to allow
+// building without external network access.
