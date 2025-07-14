@@ -1,11 +1,11 @@
 package meshdump
 
 import (
-	"context"
-	"encoding/json"
-	"log"
+        "context"
+        "encoding/json"
+        "log"
 
-	mqtt "meshdump/internal/stubmqtt"
+        mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
 // StartMQTT connects to the given broker and subscribes to the provided topic.
