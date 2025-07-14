@@ -25,6 +25,7 @@ Set `DEBUG=1` to print additional information, including the list of nodes and
 their names, to the terminal.
 
 
+
 MeshDump automatically loads environment variables from a `.env` file. It first
 looks in the current working directory and then in the directory containing the
 executable. This lets you keep the configuration next to the binary when

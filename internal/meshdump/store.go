@@ -37,6 +37,7 @@ type Store struct {
 // NewStore initializes the store. When path is non-empty a SQLite database is
 // created (if necessary) and used for persistence.
 func NewStore(path string) *Store {
+
 	s := &Store{
 		data:  make(map[string][]Telemetry),
 		nodes: make(map[string]NodeInfo),
@@ -116,6 +117,7 @@ func (s *Store) SetNodeInfo(info NodeInfo) {
 	}
 	if s.debug {
 		log.Printf("debug: node info updated %+v", info)
+
 	}
 }
 
@@ -165,9 +167,11 @@ func (s *Store) load() error {
 			}
 		}
 	}
+
 	if s.debug && len(s.nodes) > 0 {
 		log.Printf("debug: loaded nodes %+v", s.nodes)
 	}
+
 	// load telemetry
 	out, err = exec.Command("sqlite3", "-json", s.file, "SELECT node_id, data_type, value, timestamp FROM telemetry;").Output()
 	if err == nil && len(out) > 0 {
