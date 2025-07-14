@@ -4,6 +4,8 @@
 MeshDump collects telemetry from Meshtastic nodes and exposes the data through
 a small web interface. Data is typically ingested from an MQTT broker and the
 telemetry history is kept in memory. It can optionally be persisted to a file.
+The application now uses the [Eclipse Paho](https://github.com/eclipse/paho.mqtt.golang)
+client library for real MQTT connectivity.
 From the browser you can choose which node to inspect and view line charts of
 the available data types.
 

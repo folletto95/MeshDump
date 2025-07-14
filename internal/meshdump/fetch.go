@@ -25,7 +25,6 @@ func FetchTelemetry(host string) ([]Telemetry, error) {
 	if err != nil {
 		return nil, fmt.Errorf("read body: %w", err)
 	}
-
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode, bytes.TrimSpace(body))
 	}
