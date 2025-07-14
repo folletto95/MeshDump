@@ -1,9 +1,11 @@
 # MeshDump
 
+
 MeshDump collects telemetry from Meshtastic nodes and exposes the data through
 a small web interface. Nodes are polled at regular intervals and their
 telemetry history is kept in memory. From the browser you can choose which node
 to inspect and view line charts of the available data types.
+
 
 The software is written in **Go** so it can be compiled into a single
 self-contained Windows binary while development and builds occur on Linux.
