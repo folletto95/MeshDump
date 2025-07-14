@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"sync"
 	"time"
@@ -30,15 +31,25 @@ type Store struct {
 	data  map[string][]Telemetry
 	nodes map[string]NodeInfo
 	file  string
+	debug bool
 }
 
 // NewStore initializes the store. When path is non-empty a SQLite database is
 // created (if necessary) and used for persistence.
 func NewStore(path string) *Store {
-	s := &Store{data: make(map[string][]Telemetry), nodes: make(map[string]NodeInfo), file: path}
+
+	s := &Store{
+		data:  make(map[string][]Telemetry),
+		nodes: make(map[string]NodeInfo),
+		file:  path,
+		debug: os.Getenv("DEBUG") != "" && os.Getenv("DEBUG") != "0",
+	}
 	if path != "" {
 		_ = s.initDB()
 		_ = s.load()
+	}
+	if s.debug {
+		log.Printf("store debug enabled")
 	}
 	return s
 }
@@ -49,6 +60,16 @@ func (s *Store) Add(t Telemetry) {
 	defer s.mu.Unlock()
 	log.Printf("store: add node=%s type=%s value=%f", t.NodeID, t.DataType, t.Value)
 	s.data[t.NodeID] = append(s.data[t.NodeID], t)
+	if _, ok := s.nodes[t.NodeID]; !ok {
+		s.nodes[t.NodeID] = NodeInfo{ID: t.NodeID}
+		if s.file != "" {
+			sql := fmt.Sprintf("INSERT OR IGNORE INTO nodes (node_id, long_name, short_name) VALUES (%q,'','');", t.NodeID)
+			_ = exec.Command("sqlite3", s.file, sql).Run()
+		}
+		if s.debug {
+			log.Printf("debug: discovered node %s", t.NodeID)
+		}
+	}
 	if s.file != "" {
 		ts := t.Timestamp.Format(time.RFC3339Nano)
 		sql := fmt.Sprintf("INSERT INTO telemetry (node_id, data_type, value, timestamp) VALUES (%q,%q,%f,%q);", t.NodeID, t.DataType, t.Value, ts)
@@ -93,6 +114,10 @@ func (s *Store) SetNodeInfo(info NodeInfo) {
 	if s.file != "" {
 		sql := fmt.Sprintf("INSERT OR REPLACE INTO nodes (node_id, long_name, short_name) VALUES (%q,%q,%q);", info.ID, info.LongName, info.ShortName)
 		_ = exec.Command("sqlite3", s.file, sql).Run()
+	}
+	if s.debug {
+		log.Printf("debug: node info updated %+v", info)
+
 	}
 }
 
@@ -142,6 +167,11 @@ func (s *Store) load() error {
 			}
 		}
 	}
+
+	if s.debug && len(s.nodes) > 0 {
+		log.Printf("debug: loaded nodes %+v", s.nodes)
+	}
+
 	// load telemetry
 	out, err = exec.Command("sqlite3", "-json", s.file, "SELECT node_id, data_type, value, timestamp FROM telemetry;").Output()
 	if err == nil && len(out) > 0 {

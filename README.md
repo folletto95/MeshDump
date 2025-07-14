@@ -21,6 +21,10 @@ If `DATA_FILE` is specified, telemetry and node metadata are stored in a small
 SQLite database at that path. The file is created automatically and reloaded on
 startup so historical data is preserved across restarts.
 
+Set `DEBUG=1` to print additional information, including the list of nodes and
+their names, to the terminal.
+
+
 
 MeshDump automatically loads environment variables from a `.env` file. It first
 looks in the current working directory and then in the directory containing the
