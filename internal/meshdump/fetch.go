@@ -1,8 +1,10 @@
 package meshdump
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 )
@@ -18,6 +20,11 @@ func FetchTelemetry(host string) ([]Telemetry, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		b, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
+		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode, bytes.TrimSpace(b))
+	}
 
 	var data []Telemetry
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
