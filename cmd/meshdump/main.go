@@ -52,6 +52,7 @@ func loadEnv() {
 
 func main() {
 	loadEnv()
+
 	nodesEnv := os.Getenv("NODES")
 	var nodes []string
 	if nodesEnv != "" {
