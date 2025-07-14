@@ -42,3 +42,13 @@ func (s *Store) All() map[string][]Telemetry {
 	}
 	return out
 }
+
+func (s *Store) Nodes() []string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	nodes := make([]string, 0, len(s.data))
+	for k := range s.data {
+		nodes = append(nodes, k)
+	}
+	return nodes
+}

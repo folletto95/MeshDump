@@ -7,6 +7,10 @@ address and selectable in the web UI together with the desired data types.
 The software is written in **Go** so it can be compiled into a single
 self-contained Windows binary while development and builds occur on Linux.
 
+Set the environment variable `NODES` to a comma separated list of node IP
+addresses before running the binary so the application knows which nodes to
+poll.
+
 ## Building
 
 Run `./build.sh` on a Linux machine with Docker installed. This script uses a
