@@ -3,26 +3,66 @@
 <head>
     <meta charset="utf-8"/>
     <title>MeshDump</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+    </style>
 </head>
 <body>
 <h1>MeshDump Telemetry</h1>
-<div id="content"></div>
+<label for="nodeSelect">Select node:</label>
+<select id="nodeSelect"></select>
+<canvas id="chart" width="600" height="400"></canvas>
 <script>
-async function load() {
-    const nodes = await fetch('/api/nodes').then(r => r.json());
-    const div = document.getElementById('content');
-    if (nodes.length === 0) {
-        div.innerText = 'No telemetry available yet.';
-        return;
+async function fetchNodes() {
+    return fetch('/api/nodes').then(r => r.json());
+}
+async function fetchTelemetry(node) {
+    return fetch('/api/telemetry/' + node).then(r => r.json());
+}
+let chart;
+async function refresh() {
+    const node = document.getElementById('nodeSelect').value;
+    if (!node) return;
+    const data = await fetchTelemetry(node);
+    const groups = {};
+    for (const t of data) {
+        if (!groups[t.DataType]) groups[t.DataType] = [];
+        groups[t.DataType].push({x: new Date(t.Timestamp), y: t.Value});
     }
-    for (const n of nodes) {
-        const data = await fetch('/api/telemetry/' + n).then(r => r.json());
-        const pre = document.createElement('pre');
-        pre.textContent = n + '\n' + JSON.stringify(data, null, 2);
-        div.appendChild(pre);
+    const datasets = Object.entries(groups).map(([type, vals], i) => ({
+        label: type,
+        data: vals,
+        borderColor: `hsl(${i*60},70%,50%)`,
+        fill: false,
+    }));
+    if (!chart) {
+        chart = new Chart(document.getElementById('chart'), {
+            type: 'line',
+            data: { datasets },
+            options: { scales: { x: { type: 'time' } } }
+        });
+    } else {
+        chart.data.datasets = datasets;
+        chart.update();
     }
 }
-load();
+async function init() {
+    const select = document.getElementById('nodeSelect');
+    const nodes = await fetchNodes();
+    for (const n of nodes) {
+        const opt = document.createElement('option');
+        opt.value = opt.textContent = n;
+        select.appendChild(opt);
+    }
+    select.addEventListener('change', refresh);
+    if (nodes.length) {
+        select.value = nodes[0];
+        refresh();
+        setInterval(refresh, 30000);
+    }
+}
+init();
 </script>
 </body>
 </html>
