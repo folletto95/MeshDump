@@ -5,9 +5,7 @@ import (
 	"encoding/json"
 	"log"
 
-
-	mqtt "meshdump/internal/simplemqtt"
-
+	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
 // StartMQTT connects to the given broker and subscribes to the provided topic.
