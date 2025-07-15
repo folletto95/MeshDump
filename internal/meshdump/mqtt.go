@@ -135,6 +135,12 @@ func decodeProto(store *Store, topic string, payload []byte) bool {
 						store.SetNodeInfo(info)
 						return true
 					}
+				case mpb.PortNum_TEXT_MESSAGE_APP, mpb.PortNum_TEXT_MESSAGE_COMPRESSED_APP:
+					log.Printf("mqtt: text from %s: %s", id, string(data.GetPayload()))
+					return true
+				default:
+					log.Printf("mqtt: packet from %s port=%s len=%d", id, data.GetPortnum().String(), len(data.GetPayload()))
+					return true
 				}
 			}
 		}
