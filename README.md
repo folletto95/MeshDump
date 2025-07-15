@@ -43,13 +43,13 @@ running it outside of the source tree.
 
 ## Parsing logs
 
-The script `parse_log.py` extracts timestamp, node name and value from MeshDump log lines. Pipe a log through the script to obtain a tab-separated list of values:
+The helper `parse_log.go` extracts timestamp, node name and value from MeshDump log lines. Pipe a log through the program to obtain a tab-separated list of values:
 
 ```bash
-grep "store: add" log.txt | python parse_log.py
+grep "store: add" log.txt | go run parse_log.go
 ```
 
-Both MQTT and store messages are matched by the regular expression used in the script.
+Both MQTT and store messages are matched by the regular expression used in the program.
 
 ## Building
 
