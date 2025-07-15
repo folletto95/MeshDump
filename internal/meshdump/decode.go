@@ -104,6 +104,26 @@ func decodeProtoMessage(topic string, payload []byte) (*Decoded, bool) {
 						}
 						return &Decoded{NodeInfo: &info}, true
 					}
+				case mpb.PortNum_POSITION_APP:
+					var pos mpb.Position
+					if err := proto.Unmarshal(data.GetPayload(), &pos); err == nil {
+						ts := time.Now()
+						if pos.GetTime() != 0 {
+							ts = time.Unix(int64(pos.GetTime()), 0)
+						} else if pos.GetTimestamp() != 0 {
+							ts = time.Unix(int64(pos.GetTimestamp()), 0)
+						}
+						lat := float64(pos.GetLatitudeI()) / 1e7
+						lon := float64(pos.GetLongitudeI()) / 1e7
+						tel := []Telemetry{
+							{NodeID: id, DataType: "latitude", Value: lat, Timestamp: ts},
+							{NodeID: id, DataType: "longitude", Value: lon, Timestamp: ts},
+						}
+						if alt := pos.GetAltitude(); alt != 0 {
+							tel = append(tel, Telemetry{NodeID: id, DataType: "altitude", Value: float64(alt), Timestamp: ts})
+						}
+						return &Decoded{Telemetry: tel}, true
+					}
 				}
 			}
 		}

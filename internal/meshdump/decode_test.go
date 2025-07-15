@@ -56,3 +56,28 @@ func TestDecodeMessageMapReport(t *testing.T) {
 		t.Fatalf("unexpected node info: %+v", dec.NodeInfo)
 	}
 }
+
+func TestDecodeMessageProtoPosition(t *testing.T) {
+	lat := int32(100000000)
+	lon := int32(200000000)
+	pos := &mpb.Position{
+		LatitudeI:  proto.Int32(lat),
+		LongitudeI: proto.Int32(lon),
+		Time:       12345,
+	}
+	posData, _ := proto.Marshal(pos)
+	pkt := &mpb.MeshPacket{From: 2, PayloadVariant: &mpb.MeshPacket_Decoded{Decoded: &mpb.Data{Portnum: mpb.PortNum_POSITION_APP, Payload: posData}}}
+	env := &mpb.ServiceEnvelope{Packet: pkt}
+	raw, _ := proto.Marshal(env)
+	enc := base64.StdEncoding.EncodeToString(raw)
+	dec, err := DecodeMessage("msh/00000002", enc)
+	if err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if len(dec.Telemetry) < 2 {
+		t.Fatalf("no position decoded")
+	}
+	if dec.Telemetry[0].NodeID != "00000002" {
+		t.Errorf("unexpected node id: %s", dec.Telemetry[0].NodeID)
+	}
+}
