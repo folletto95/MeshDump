@@ -48,5 +48,6 @@ func TestStoreSetNodeInfo(t *testing.T) {
 	list := s.Nodes()
 	if len(list) != 1 || list[0] != info {
 		t.Errorf("unexpected nodes list: %+v", list)
+
 	}
 }
