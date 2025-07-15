@@ -41,6 +41,16 @@ executable. This lets you keep the configuration next to the binary when
 running it outside of the source tree.
 
 
+## Parsing logs
+
+The helper `parse_log.go` extracts timestamp, node name and value from MeshDump log lines. Pipe a log through the program to obtain a tab-separated list of values:
+
+```bash
+grep "store: add" log.txt | go run parse_log.go
+```
+
+Both MQTT and store messages are matched by the regular expression used in the program.
+
 ## Building
 
 Run `./build.sh` on a Linux machine with Docker installed. The script compiles
