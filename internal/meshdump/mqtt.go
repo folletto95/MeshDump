@@ -30,13 +30,31 @@ type jsonPosition struct {
 // nodeIDFromTopic attempts to extract a node ID from a MQTT topic. The default
 // Meshtastic topic format is "msh/<nodeId>/..." so we return the first segment
 // after the root if present.
+// validNodeID reports whether s looks like a Meshtastic node ID, which is
+// normally eight hexadecimal characters.
+func validNodeID(s string) bool {
+	if len(s) != 8 {
+		return false
+	}
+	for _, r := range s {
+		if (r >= '0' && r <= '9') || (r >= 'a' && r <= 'f') || (r >= 'A' && r <= 'F') {
+			continue
+		}
+		return false
+	}
+	return true
+}
+
+// nodeIDFromTopic attempts to extract a node ID from a MQTT topic. The default
+// Meshtastic topic format is "msh/<nodeId>/..." but additional segments may
+// precede the actual node ID. This function returns the first segment that
+// matches the hexadecimal node ID format.
 func nodeIDFromTopic(topic string) (string, bool) {
 	parts := strings.Split(topic, "/")
-	if len(parts) >= 2 {
-		return parts[1], true
-	}
-	if len(parts) == 1 {
-		return parts[0], true
+	for _, p := range parts {
+		if validNodeID(p) {
+			return strings.ToLower(p), true
+		}
 	}
 	return "", false
 }
