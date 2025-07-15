@@ -11,5 +11,8 @@ require (
 
 require (
 	github.com/gorilla/websocket v1.4.2 // indirect
+	github.com/meshtastic/go v0.0.0
 	golang.org/x/net v0.0.0-20200425230154-ff2c4b7c35a0 // indirect
 )
+
+replace github.com/meshtastic/go => ./internal/meshdump/pb/github.com/meshtastic/go
