@@ -11,6 +11,20 @@ import (
 	pproto "meshdump/internal/proto"
 )
 
+// nodeIDFromTopic attempts to extract a node ID from a MQTT topic. The default
+// Meshtastic topic format is "msh/<nodeId>/..." so we return the first segment
+// after the root if present.
+func nodeIDFromTopic(topic string) (string, bool) {
+	parts := strings.Split(topic, "/")
+	if len(parts) >= 2 {
+		return parts[1], true
+	}
+	if len(parts) == 1 {
+		return parts[0], true
+	}
+	return "", false
+}
+
 // StartMQTT connects to the given broker and subscribes to the provided topic.
 // If user is non-empty, the client authenticates with the provided username and password.
 // Incoming messages are first decoded as JSON Telemetry. If that fails they are
@@ -35,6 +49,15 @@ func StartMQTT(ctx context.Context, broker, topic, user, pass string, store *Sto
 
 		var tel Telemetry
 		if err := json.Unmarshal(m.Payload(), &tel); err == nil {
+			if tel.NodeID == "" {
+				if id, ok := nodeIDFromTopic(m.Topic()); ok {
+					tel.NodeID = id
+				}
+			}
+			if tel.NodeID == "" {
+				log.Printf("mqtt: telemetry message missing node id: %s", m.Topic())
+				return
+			}
 			log.Printf("mqtt: message from %s type=%s value=%f", tel.NodeID, tel.DataType, tel.Value)
 			store.Add(tel)
 			return
@@ -43,9 +66,7 @@ func StartMQTT(ctx context.Context, broker, topic, user, pass string, store *Sto
 		// not JSON telemetry, try protobuf map report
 		var mr pproto.MapReport
 		if err := proto.Unmarshal(m.Payload(), &mr); err == nil {
-			parts := strings.Split(m.Topic(), "/")
-			if len(parts) >= 2 {
-				id := parts[len(parts)-2]
+			if id, ok := nodeIDFromTopic(m.Topic()); ok {
 				info := NodeInfo{ID: id, LongName: mr.GetLongName(), ShortName: mr.GetShortName(), Firmware: mr.GetFirmwareVersion()}
 				store.SetNodeInfo(info)
 				log.Printf("mqtt: map report for %s firmware=%s", id, mr.GetFirmwareVersion())
