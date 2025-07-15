@@ -25,8 +25,8 @@ type NodeInfo struct {
 	Firmware  string `json:"firmware"`
 }
 
-// Store keeps telemetry and node information in memory and persists it to an
-// optional SQLite database using the `sqlite3` command line utility.
+// Store keeps telemetry and node information in memory. When a database path is
+// provided, data is persisted using the built-in SQLite driver.
 type Store struct {
 	mu    sync.Mutex
 	data  map[string][]Telemetry

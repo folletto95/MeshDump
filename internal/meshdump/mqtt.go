@@ -103,22 +103,6 @@ func telemetryFromProto(nodeID string, tm *mpb.Telemetry) []Telemetry {
 	return out
 }
 
-// decodeProto attempts to decode Meshtastic protobuf payloads such as
-// ServiceEnvelope, Telemetry or MapReport. It returns true if the message was
-// recognized and stored.
-func decodeProto(store *Store, topic string, payload []byte) bool {
-	if d, ok := decodeProtoMessage(topic, payload); ok {
-		for _, t := range d.Telemetry {
-			store.Add(t)
-		}
-		if d.NodeInfo != nil {
-			store.SetNodeInfo(*d.NodeInfo)
-		}
-		return true
-	}
-	return false
-}
-
 // StartMQTT connects to the given broker and subscribes to the provided topic.
 // If user is non-empty, the client authenticates with the provided username and password.
 // Incoming messages are first decoded as JSON Telemetry. If that fails they are
