@@ -3,7 +3,8 @@
 
 MeshDump collects telemetry from Meshtastic nodes and exposes the data through
 a small web interface. Data is typically ingested from an MQTT broker and the
-telemetry history is kept in memory. It can optionally be persisted to a file.
+telemetry history is kept in memory. It can optionally be persisted to a SQLite
+database file.
 
 The program uses the Eclipse Paho MQTT client library to connect to a broker
 and subscribe to telemetry topics. Incoming messages can be JSON encoded
@@ -24,8 +25,9 @@ Nodes appear in the interface as soon as they publish telemetry, so you do not
 need to list them ahead of time.
 
 If `DATA_FILE` is specified, telemetry and node metadata are stored in a small
-SQLite database at that path. The file is created automatically and reloaded on
-startup so historical data is preserved across restarts.
+SQLite database at that path (for example `telemetry.db`). The file is created
+automatically and reloaded on startup so historical data is preserved across
+restarts.
 Node metadata now includes the firmware version when available.
 
 Set `DEBUG=1` to print additional information, including the list of nodes and
@@ -43,3 +45,7 @@ running it outside of the source tree.
 
 Run `./build.sh` on a Linux machine with Docker installed. The script compiles
 a self-contained Windows binary named `MeshDump.exe` using a Go Docker image.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
