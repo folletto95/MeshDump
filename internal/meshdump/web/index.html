@@ -43,6 +43,7 @@ async function updateNodes() {
     const current = select.value;
     select.innerHTML = '';
     list.innerHTML = '';
+    select.size = nodes.length || 1;
     for (const n of nodes) {
         const name = n.long_name || n.short_name || n.id;
         const opt = document.createElement('option');
