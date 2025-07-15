@@ -13,10 +13,14 @@
 <h1>MeshDump Telemetry</h1>
 <label for="nodeSelect">Select node:</label>
 <select id="nodeSelect"></select>
+<div id="nodeInfo"></div>
 <canvas id="chart" width="600" height="400"></canvas>
 <script>
 async function fetchNodes() {
     return fetch('/api/nodes').then(r => r.json());
+}
+async function fetchNodeInfo(id) {
+    return fetch('/api/nodeinfo/' + id).then(r => r.json());
 }
 async function fetchTelemetry(node) {
     return fetch('/api/telemetry/' + node).then(r => r.json());
@@ -25,6 +29,8 @@ let chart;
 async function refresh() {
     const node = document.getElementById('nodeSelect').value;
     if (!node) return;
+    const info = await fetchNodeInfo(node);
+    document.getElementById('nodeInfo').textContent = info.Firmware ? `Firmware: ${info.Firmware}` : '';
     const data = await fetchTelemetry(node);
     const groups = {};
     for (const t of data) {

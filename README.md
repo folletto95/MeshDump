@@ -6,7 +6,10 @@ a small web interface. Data is typically ingested from an MQTT broker and the
 telemetry history is kept in memory. It can optionally be persisted to a file.
 
 The program uses the Eclipse Paho MQTT client library to connect to a broker
-and subscribe to telemetry topics.
+and subscribe to telemetry topics. Incoming messages can be JSON encoded
+`Telemetry` structs or binary protobuf `MapReport` messages published by
+Meshtastic nodes. Map reports are used to populate node metadata such as the
+firmware version.
 
 From the browser you can choose which node to inspect and view line charts of
 the available data types.
@@ -23,6 +26,7 @@ need to list them ahead of time.
 If `DATA_FILE` is specified, telemetry and node metadata are stored in a small
 SQLite database at that path. The file is created automatically and reloaded on
 startup so historical data is preserved across restarts.
+Node metadata now includes the firmware version when available.
 
 Set `DEBUG=1` to print additional information, including the list of nodes and
 their names, to the terminal.

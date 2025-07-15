@@ -1,0 +1,20 @@
+syntax = "proto3";
+package proto;
+option go_package = "meshdump/internal/proto";
+
+message MapReport {
+  string long_name = 1;
+  string short_name = 2;
+  int32 role = 3;
+  int32 hw_model = 4;
+  string firmware_version = 5;
+  int32 region = 6;
+  int32 modem_preset = 7;
+  bool has_default_channel = 8;
+  sfixed32 latitude_i = 9;
+  sfixed32 longitude_i = 10;
+  int32 altitude = 11;
+  uint32 position_precision = 12;
+  uint32 num_online_local_nodes = 13;
+  bool has_opted_report_location = 14;
+}
