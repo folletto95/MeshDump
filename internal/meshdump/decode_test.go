@@ -48,7 +48,7 @@ func TestDecodeMessageMapReport(t *testing.T) {
 	mr := &pproto.MapReport{LongName: "Node", FirmwareVersion: "1.0"}
 	raw, _ := proto.Marshal(mr)
 	enc := base64.StdEncoding.EncodeToString(raw)
-	dec, err := DecodeMessage("msh/nodeX", enc)
+	dec, err := DecodeMessage("msh/12345678", enc)
 	if err != nil {
 		t.Fatalf("decode: %v", err)
 	}
