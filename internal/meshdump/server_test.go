@@ -61,7 +61,7 @@ func TestNodesHandler(t *testing.T) {
 	if err := json.Unmarshal(rr.Body.Bytes(), &nodes); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
-	if len(nodes) != 1 || nodes[0].ID != exampleTelemetry.NodeID {
+	if len(nodes) != 1 || nodes[0].ID != exampleTelemetry.NodeID || !nodes[0].HasData {
 		t.Errorf("unexpected nodes: %v", nodes)
 	}
 }
@@ -81,7 +81,7 @@ func TestNodeInfoHandler(t *testing.T) {
 	}
 
 	stored, ok := st.Node(exampleTelemetry.NodeID)
-	if !ok || stored.LongName != "Tester" || stored.Firmware != "2.0" {
+	if !ok || stored.LongName != "Tester" || stored.Firmware != "2.0" || !stored.HasData {
 		t.Errorf("node info not stored: %+v", stored)
 	}
 
@@ -96,7 +96,7 @@ func TestNodeInfoHandler(t *testing.T) {
 	if err := json.Unmarshal(rr.Body.Bytes(), &got); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
-	if got.ID != exampleTelemetry.NodeID || got.LongName != "Tester" {
+	if got.ID != exampleTelemetry.NodeID || got.LongName != "Tester" || !got.HasData {
 		t.Errorf("unexpected node info: %+v", got)
 	}
 }
