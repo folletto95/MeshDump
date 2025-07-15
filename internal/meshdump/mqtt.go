@@ -15,6 +15,21 @@ import (
 	pproto "meshdump/internal/proto"
 )
 
+// jsonPosition models the JSON payload sent by Meshtastic nodes when reporting
+// their position. Coordinates are expressed as integers with seven decimal
+// digits of precision. The struct only includes fields we care about.
+type jsonPosition struct {
+	Type      string `json:"type"`
+	From      uint32 `json:"from"`
+	Sender    string `json:"sender"`
+	Timestamp int64  `json:"timestamp"`
+	Payload   struct {
+		LatitudeI  int32 `json:"latitude_i"`
+		LongitudeI int32 `json:"longitude_i"`
+		Time       int64 `json:"time"`
+	} `json:"payload"`
+}
+
 // nodeIDFromTopic attempts to extract a node ID from a MQTT topic. The default
 // Meshtastic topic format is "msh/<nodeId>/..." so we return the first segment
 // after the root if present.
@@ -172,6 +187,35 @@ func StartMQTT(ctx context.Context, broker, topic, user, pass string, store *Sto
 			}
 			log.Printf("mqtt: message from %s type=%s value=%f", tel.NodeID, tel.DataType, tel.Value)
 			store.Add(tel)
+			return
+		}
+
+		// try to decode position messages published as JSON
+		var pos jsonPosition
+		if err := json.Unmarshal(m.Payload(), &pos); err == nil && pos.Type == "position" {
+			id := strings.TrimPrefix(pos.Sender, "!")
+			if id == "" && pos.From != 0 {
+				id = fmt.Sprintf("%08x", pos.From)
+			}
+			if id == "" {
+				if tID, ok := nodeIDFromTopic(m.Topic()); ok {
+					id = tID
+				}
+			}
+			if id == "" {
+				log.Printf("mqtt: position message missing node id: %s", m.Topic())
+				return
+			}
+			ts := time.Now()
+			if pos.Payload.Time != 0 {
+				ts = time.Unix(pos.Payload.Time, 0)
+			} else if pos.Timestamp != 0 {
+				ts = time.Unix(pos.Timestamp, 0)
+			}
+			lat := float64(pos.Payload.LatitudeI) / 1e7
+			lon := float64(pos.Payload.LongitudeI) / 1e7
+			store.Add(Telemetry{NodeID: id, DataType: "latitude", Value: lat, Timestamp: ts})
+			store.Add(Telemetry{NodeID: id, DataType: "longitude", Value: lon, Timestamp: ts})
 			return
 		}
 
