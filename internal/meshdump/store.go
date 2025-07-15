@@ -19,9 +19,10 @@ type Telemetry struct {
 
 // NodeInfo describes a node by ID with optional names.
 type NodeInfo struct {
-	ID        string
-	LongName  string
-	ShortName string
+	ID        string `json:"id"`
+	LongName  string `json:"long_name"`
+	ShortName string `json:"short_name"`
+	Firmware  string `json:"firmware"`
 }
 
 // Store keeps telemetry and node information in memory and persists it to an
@@ -63,7 +64,7 @@ func (s *Store) Add(t Telemetry) {
 	if _, ok := s.nodes[t.NodeID]; !ok {
 		s.nodes[t.NodeID] = NodeInfo{ID: t.NodeID}
 		if s.file != "" {
-			sql := fmt.Sprintf("INSERT OR IGNORE INTO nodes (node_id, long_name, short_name) VALUES (%q,'','');", t.NodeID)
+			sql := fmt.Sprintf("INSERT OR IGNORE INTO nodes (node_id, long_name, short_name, firmware) VALUES (%q,'','', '');", t.NodeID)
 			_ = exec.Command("sqlite3", s.file, sql).Run()
 		}
 		if s.debug {
@@ -112,7 +113,7 @@ func (s *Store) SetNodeInfo(info NodeInfo) {
 	defer s.mu.Unlock()
 	s.nodes[info.ID] = info
 	if s.file != "" {
-		sql := fmt.Sprintf("INSERT OR REPLACE INTO nodes (node_id, long_name, short_name) VALUES (%q,%q,%q);", info.ID, info.LongName, info.ShortName)
+		sql := fmt.Sprintf("INSERT OR REPLACE INTO nodes (node_id, long_name, short_name, firmware) VALUES (%q,%q,%q,%q);", info.ID, info.LongName, info.ShortName, info.Firmware)
 		_ = exec.Command("sqlite3", s.file, sql).Run()
 	}
 	if s.debug {
@@ -141,7 +142,8 @@ func (s *Store) initDB() error {
 CREATE TABLE IF NOT EXISTS nodes (
     node_id TEXT PRIMARY KEY,
     long_name TEXT,
-    short_name TEXT
+    short_name TEXT,
+    firmware TEXT
 );`
 	return exec.Command("sqlite3", s.file, schema).Run()
 }
@@ -154,16 +156,17 @@ func (s *Store) load() error {
 		return nil
 	}
 	// load nodes
-	out, err := exec.Command("sqlite3", "-json", s.file, "SELECT node_id, long_name, short_name FROM nodes;").Output()
+	out, err := exec.Command("sqlite3", "-json", s.file, "SELECT node_id, long_name, short_name, firmware FROM nodes;").Output()
 	if err == nil && len(out) > 0 {
 		var rows []struct {
 			ID        string `json:"node_id"`
 			LongName  string `json:"long_name"`
 			ShortName string `json:"short_name"`
+			Firmware  string `json:"firmware"`
 		}
 		if err := json.Unmarshal(out, &rows); err == nil {
 			for _, r := range rows {
-				s.nodes[r.ID] = NodeInfo{ID: r.ID, LongName: r.LongName, ShortName: r.ShortName}
+				s.nodes[r.ID] = NodeInfo{ID: r.ID, LongName: r.LongName, ShortName: r.ShortName, Firmware: r.Firmware}
 			}
 		}
 	}
