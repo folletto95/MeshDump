@@ -6,15 +6,25 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { font-family: sans-serif; margin: 20px; }
+        #container { display: flex; align-items: flex-start; }
+        #sidebar { margin-right: 20px; }
         #nodeSelect { min-width: 200px; padding: 4px; font-size: 14px; }
+        #nodeList { list-style: none; padding-left: 0; margin-top: 10px; }
     </style>
 </head>
 <body>
-<h1>MeshDump Telemetry</h1>
-<label for="nodeSelect">Select node:</label>
-<select id="nodeSelect"></select>
-<div id="nodeInfo"></div>
-<canvas id="chart" width="600" height="400"></canvas>
+<div id="container">
+  <div id="sidebar">
+    <label for="nodeSelect">Select node:</label><br/>
+    <select id="nodeSelect"></select>
+    <ul id="nodeList"></ul>
+  </div>
+  <div id="main">
+    <h1>MeshDump Telemetry</h1>
+    <div id="nodeInfo"></div>
+    <canvas id="chart" width="600" height="400"></canvas>
+  </div>
+</div>
 <script>
 async function fetchNodes() {
     return fetch('/api/nodes').then(r => r.json());
@@ -26,6 +36,28 @@ async function fetchTelemetry(node) {
     return fetch('/api/telemetry/' + node).then(r => r.json());
 }
 let chart;
+async function updateNodes() {
+    const nodes = await fetchNodes();
+    const select = document.getElementById('nodeSelect');
+    const list = document.getElementById('nodeList');
+    const current = select.value;
+    select.innerHTML = '';
+    list.innerHTML = '';
+    for (const n of nodes) {
+        const name = n.LongName || n.ShortName || n.ID;
+        const opt = document.createElement('option');
+        opt.value = n.ID;
+        opt.textContent = name;
+        select.appendChild(opt);
+        const li = document.createElement('li');
+        li.textContent = name;
+        list.appendChild(li);
+    }
+    if (current) {
+        select.value = current;
+    }
+    return nodes;
+}
 async function refresh() {
     const node = document.getElementById('nodeSelect').value;
     if (!node) return;
@@ -56,19 +88,14 @@ async function refresh() {
 }
 async function init() {
     const select = document.getElementById('nodeSelect');
-    const nodes = await fetchNodes();
-    for (const n of nodes) {
-        const opt = document.createElement('option');
-        opt.value = n.ID;
-        opt.textContent = n.LongName || n.ShortName || n.ID;
-        select.appendChild(opt);
-    }
     select.addEventListener('change', refresh);
+    const nodes = await updateNodes();
     if (nodes.length) {
         select.value = nodes[0].ID;
         refresh();
         setInterval(refresh, 30000);
     }
+    setInterval(updateNodes, 5000);
 }
 init();
 </script>
