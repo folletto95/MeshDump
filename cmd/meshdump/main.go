@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-        "strings"
+	"strings"
 
 	"meshdump/internal/meshdump"
 )
@@ -51,7 +51,6 @@ func loadEnv() {
 
 func main() {
 	loadEnv()
-
 
 	dataFile := os.Getenv("DATA_FILE")
 	log.Printf("config: data file=%s", dataFile)
