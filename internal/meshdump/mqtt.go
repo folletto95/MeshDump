@@ -2,17 +2,15 @@ package meshdump
 
 import (
 	"context"
-	"encoding/hex"
 	"encoding/json"
 	"log"
 	"strings"
 	"time"
-  
-  pproto "meshdump/internal/proto"
+
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	meshtastic "github.com/meshtastic/go/generated"
 	"google.golang.org/protobuf/proto"
-
+	pproto "meshdump/internal/proto"
 )
 
 // StartMQTT connects to the given broker and subscribes to the provided topic.
@@ -35,7 +33,6 @@ func StartMQTT(ctx context.Context, broker, topic, user, pass string, store *Sto
 	// send a welcome message to verify connectivity
 	client.Publish("meshdump/welcome", 0, false, []byte("MeshDump connected"))
 
-	debug := store.debug
 	if t := client.Subscribe(topic, 0, func(c mqtt.Client, m mqtt.Message) {
 
 		var tel Telemetry

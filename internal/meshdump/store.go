@@ -1,13 +1,13 @@
 package meshdump
 
 import (
-	"encoding/json"
-	"fmt"
+	"database/sql"
 	"log"
 	"os"
-	"os/exec"
 	"sync"
 	"time"
+
+	_ "modernc.org/sqlite"
 )
 
 type Telemetry struct {
@@ -33,6 +33,7 @@ type Store struct {
 	nodes map[string]NodeInfo
 	file  string
 	debug bool
+	db    *sql.DB
 }
 
 // NewStore initializes the store. When path is non-empty a SQLite database is
@@ -46,8 +47,14 @@ func NewStore(path string) *Store {
 		debug: os.Getenv("DEBUG") != "" && os.Getenv("DEBUG") != "0",
 	}
 	if path != "" {
-		_ = s.initDB()
-		_ = s.load()
+		db, err := sql.Open("sqlite", path)
+		if err == nil {
+			s.db = db
+			_ = s.initDB()
+			_ = s.load()
+		} else {
+			log.Printf("store: %v", err)
+		}
 	}
 	if s.debug {
 		log.Printf("store debug enabled")
@@ -63,18 +70,16 @@ func (s *Store) Add(t Telemetry) {
 	s.data[t.NodeID] = append(s.data[t.NodeID], t)
 	if _, ok := s.nodes[t.NodeID]; !ok {
 		s.nodes[t.NodeID] = NodeInfo{ID: t.NodeID}
-		if s.file != "" {
-			sql := fmt.Sprintf("INSERT OR IGNORE INTO nodes (node_id, long_name, short_name, firmware) VALUES (%q,'','', '');", t.NodeID)
-			_ = exec.Command("sqlite3", s.file, sql).Run()
+		if s.db != nil {
+			_, _ = s.db.Exec("INSERT OR IGNORE INTO nodes (node_id, long_name, short_name, firmware) VALUES (?, '', '', '')", t.NodeID)
 		}
 		if s.debug {
 			log.Printf("debug: discovered node %s", t.NodeID)
 		}
 	}
-	if s.file != "" {
+	if s.db != nil {
 		ts := t.Timestamp.Format(time.RFC3339Nano)
-		sql := fmt.Sprintf("INSERT INTO telemetry (node_id, data_type, value, timestamp) VALUES (%q,%q,%f,%q);", t.NodeID, t.DataType, t.Value, ts)
-		_ = exec.Command("sqlite3", s.file, sql).Run()
+		_, _ = s.db.Exec("INSERT INTO telemetry (node_id, data_type, value, timestamp) VALUES (?, ?, ?, ?)", t.NodeID, t.DataType, t.Value, ts)
 	}
 }
 
@@ -112,9 +117,8 @@ func (s *Store) SetNodeInfo(info NodeInfo) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.nodes[info.ID] = info
-	if s.file != "" {
-		sql := fmt.Sprintf("INSERT OR REPLACE INTO nodes (node_id, long_name, short_name, firmware) VALUES (%q,%q,%q,%q);", info.ID, info.LongName, info.ShortName, info.Firmware)
-		_ = exec.Command("sqlite3", s.file, sql).Run()
+	if s.db != nil {
+		_, _ = s.db.Exec("INSERT OR REPLACE INTO nodes (node_id, long_name, short_name, firmware) VALUES (?, ?, ?, ?)", info.ID, info.LongName, info.ShortName, info.Firmware)
 	}
 	if s.debug {
 		log.Printf("debug: node info updated %+v", info)
@@ -145,28 +149,28 @@ CREATE TABLE IF NOT EXISTS nodes (
     short_name TEXT,
     firmware TEXT
 );`
-	return exec.Command("sqlite3", s.file, schema).Run()
+	if s.db == nil {
+		return nil
+	}
+	_, err := s.db.Exec(schema)
+	return err
 }
 
 // load repopulates the in-memory store from the SQLite database.
 func (s *Store) load() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if s.file == "" {
+	if s.db == nil {
 		return nil
 	}
 	// load nodes
-	out, err := exec.Command("sqlite3", "-json", s.file, "SELECT node_id, long_name, short_name, firmware FROM nodes;").Output()
-	if err == nil && len(out) > 0 {
-		var rows []struct {
-			ID        string `json:"node_id"`
-			LongName  string `json:"long_name"`
-			ShortName string `json:"short_name"`
-			Firmware  string `json:"firmware"`
-		}
-		if err := json.Unmarshal(out, &rows); err == nil {
-			for _, r := range rows {
-				s.nodes[r.ID] = NodeInfo{ID: r.ID, LongName: r.LongName, ShortName: r.ShortName, Firmware: r.Firmware}
+	rows, err := s.db.Query("SELECT node_id, long_name, short_name, firmware FROM nodes")
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var id, long, short, fw string
+			if err := rows.Scan(&id, &long, &short, &fw); err == nil {
+				s.nodes[id] = NodeInfo{ID: id, LongName: long, ShortName: short, Firmware: fw}
 			}
 		}
 	}
@@ -176,25 +180,30 @@ func (s *Store) load() error {
 	}
 
 	// load telemetry
-	out, err = exec.Command("sqlite3", "-json", s.file, "SELECT node_id, data_type, value, timestamp FROM telemetry;").Output()
-	if err == nil && len(out) > 0 {
-		var rows []struct {
-			NodeID    string  `json:"node_id"`
-			DataType  string  `json:"data_type"`
-			Value     float64 `json:"value"`
-			Timestamp string  `json:"timestamp"`
-		}
-		if err := json.Unmarshal(out, &rows); err == nil {
-			for _, r := range rows {
-				ts, _ := time.Parse(time.RFC3339Nano, r.Timestamp)
-				s.data[r.NodeID] = append(s.data[r.NodeID], Telemetry{
-					NodeID:    r.NodeID,
-					DataType:  r.DataType,
-					Value:     r.Value,
+	trows, err := s.db.Query("SELECT node_id, data_type, value, timestamp FROM telemetry")
+	if err == nil {
+		defer trows.Close()
+		for trows.Next() {
+			var nodeID, dtype, tsStr string
+			var val float64
+			if err := trows.Scan(&nodeID, &dtype, &val, &tsStr); err == nil {
+				ts, _ := time.Parse(time.RFC3339Nano, tsStr)
+				s.data[nodeID] = append(s.data[nodeID], Telemetry{
+					NodeID:    nodeID,
+					DataType:  dtype,
+					Value:     val,
 					Timestamp: ts,
 				})
 			}
 		}
+	}
+	return nil
+}
+
+// Close closes the underlying database if open.
+func (s *Store) Close() error {
+	if s.db != nil {
+		return s.db.Close()
 	}
 	return nil
 }
