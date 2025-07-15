@@ -19,14 +19,17 @@
   <div id="sidebar">
     <label for="nodeSelect">Select node:</label><br/>
     <select id="nodeSelect"></select>
+    <br/>
+    <label for="dataTypeSelect">Data type:</label><br/>
+    <select id="dataTypeSelect"></select>
     <ul id="nodeList"></ul>
   </div>
   <div id="main">
     <h1>MeshDump Telemetry</h1>
-    <div id="nodeInfo"></div>
+    <pre id="nodeInfo" style="background:#f4f4f4;padding:10px;border:1px solid #ccc;overflow:auto"></pre>
     <canvas id="chart" width="600" height="400"></canvas>
+    </div>
   </div>
-</div>
 <script>
 async function fetchNodes() {
     return fetch('/api/nodes').then(r => r.json());
@@ -81,24 +84,49 @@ async function refresh() {
     const node = document.getElementById('nodeSelect').value;
     if (!node) return;
     const info = await fetchNodeInfo(node);
-    document.getElementById('nodeInfo').textContent = info.firmware ? `Firmware: ${info.firmware}` : '';
+    const infoText = [`ID: ${info.id}`];
+    if (info.long_name) infoText.push(`Long name: ${info.long_name}`);
+    if (info.short_name) infoText.push(`Short name: ${info.short_name}`);
+    if (info.firmware) infoText.push(`Firmware: ${info.firmware}`);
+    document.getElementById('nodeInfo').textContent = infoText.join('\n');
     const data = await fetchTelemetry(node);
     const groups = {};
     for (const t of data) {
         if (!groups[t.DataType]) groups[t.DataType] = [];
         groups[t.DataType].push({x: new Date(t.Timestamp), y: t.Value});
     }
-    const datasets = Object.entries(groups).map(([type, vals], i) => ({
-        label: type,
-        data: vals,
-        borderColor: `hsl(${i*60},70%,50%)`,
-        fill: false,
-    }));
+    const typeSelect = document.getElementById('dataTypeSelect');
+    const currentType = typeSelect.value;
+    const types = Object.keys(groups).sort();
+    typeSelect.innerHTML = '';
+    for (const t of types) {
+        const opt = document.createElement('option');
+        opt.value = t;
+        opt.textContent = t;
+        typeSelect.appendChild(opt);
+    }
+    if (currentType && types.includes(currentType)) {
+        typeSelect.value = currentType;
+    } else if (types.includes('voltage')) {
+        typeSelect.value = 'voltage';
+    }
+    const selectedType = typeSelect.value;
+    const datasets = [];
+    if (selectedType && groups[selectedType]) {
+        datasets.push({
+            label: selectedType,
+            data: groups[selectedType],
+            borderColor: 'hsl(200,70%,50%)',
+            fill: false,
+        });
+    }
     ensureChart(datasets);
 }
 async function init() {
     const select = document.getElementById('nodeSelect');
+    const typeSelect = document.getElementById('dataTypeSelect');
     select.addEventListener('change', refresh);
+    typeSelect.addEventListener('change', refresh);
     const nodes = await updateNodes();
     if (nodes.length) {
         select.value = nodes[0].id;
