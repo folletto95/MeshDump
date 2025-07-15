@@ -37,6 +37,20 @@ async function fetchTelemetry(node) {
     return fetch('/api/telemetry/' + node).then(r => r.json());
 }
 let chart;
+function ensureChart(datasets) {
+    const ctx = document.getElementById('chart');
+    const data = datasets.length ? datasets : [{label: '', data: []}];
+    if (!chart) {
+        chart = new Chart(ctx, {
+            type: 'line',
+            data: { datasets: data },
+            options: { scales: { x: { type: 'time' }, y: {} } }
+        });
+    } else {
+        chart.data.datasets = data;
+        chart.update();
+    }
+}
 async function updateNodes() {
     const nodes = await fetchNodes();
     const select = document.getElementById('nodeSelect');
@@ -76,16 +90,7 @@ async function refresh() {
         borderColor: `hsl(${i*60},70%,50%)`,
         fill: false,
     }));
-    if (!chart) {
-        chart = new Chart(document.getElementById('chart'), {
-            type: 'line',
-            data: { datasets },
-            options: { scales: { x: { type: 'time' } } }
-        });
-    } else {
-        chart.data.datasets = datasets;
-        chart.update();
-    }
+    ensureChart(datasets);
 }
 async function init() {
     const select = document.getElementById('nodeSelect');
