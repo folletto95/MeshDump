@@ -41,6 +41,16 @@ executable. This lets you keep the configuration next to the binary when
 running it outside of the source tree.
 
 
+## Parsing logs
+
+The script `parse_log.py` extracts timestamp, node name and value from MeshDump log lines. Pipe a log through the script to obtain a tab-separated list of values:
+
+```bash
+grep "store: add" log.txt | python parse_log.py
+```
+
+Both MQTT and store messages are matched by the regular expression used in the script.
+
 ## Building
 
 Run `./build.sh` on a Linux machine with Docker installed. The script compiles
