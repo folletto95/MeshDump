@@ -30,6 +30,11 @@ automatically and reloaded on startup so historical data is preserved across
 restarts.
 Node metadata now includes the firmware version when available.
 
+Each node is identified by a unique `node_id`. The SQLite database keeps all
+telemetry for a node grouped under this identifier. The `nodes` table uses
+`node_id` as its primary key and the `telemetry` table references it so that all
+measurements for the same node can be efficiently queried.
+
 Set `DEBUG=1` to print additional information, including the list of nodes and
 their names, to the terminal.
 

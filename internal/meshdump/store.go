@@ -137,18 +137,20 @@ func (s *Store) Node(id string) (NodeInfo, bool) {
 
 // initDB creates the required tables if they do not exist.
 func (s *Store) initDB() error {
-	schema := `CREATE TABLE IF NOT EXISTS telemetry (
-    node_id TEXT,
-    data_type TEXT,
-    value REAL,
-    timestamp TEXT
-);
-CREATE TABLE IF NOT EXISTS nodes (
+	schema := `CREATE TABLE IF NOT EXISTS nodes (
     node_id TEXT PRIMARY KEY,
     long_name TEXT,
     short_name TEXT,
     firmware TEXT
-);`
+);
+CREATE TABLE IF NOT EXISTS telemetry (
+    node_id TEXT NOT NULL,
+    data_type TEXT,
+    value REAL,
+    timestamp TEXT,
+    FOREIGN KEY(node_id) REFERENCES nodes(node_id)
+);
+CREATE INDEX IF NOT EXISTS idx_telemetry_node_id ON telemetry(node_id);`
 	if s.db == nil {
 		return nil
 	}
