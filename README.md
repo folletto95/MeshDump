@@ -58,8 +58,10 @@ Both MQTT and store messages are matched by the regular expression used in the p
 
 ## Building
 
-Run `./build.sh` on a Linux machine with Docker installed. The script compiles
-a self-contained Windows binary named `MeshDump.exe` using a Go Docker image.
+Run `./build.sh [os] [arch]` on a Linux machine with Docker installed. The
+script compiles a binary for the specified target using a Go Docker image. For
+example `./build.sh linux amd64` builds a Linux binary named `MeshDump`, while
+`./build.sh windows amd64` produces `MeshDump.exe`.
 
 ## License
 
