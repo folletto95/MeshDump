@@ -2,8 +2,6 @@ package meshdump
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -12,7 +10,6 @@ import (
 	mpb "github.com/meshtastic/go/generated"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
-	pproto "meshdump/internal/proto"
 )
 
 // jsonPosition models the JSON payload sent by Meshtastic nodes when reporting
@@ -110,44 +107,14 @@ func telemetryFromProto(nodeID string, tm *mpb.Telemetry) []Telemetry {
 // ServiceEnvelope, Telemetry or MapReport. It returns true if the message was
 // recognized and stored.
 func decodeProto(store *Store, topic string, payload []byte) bool {
-	var env mpb.ServiceEnvelope
-	if err := proto.Unmarshal(payload, &env); err == nil {
-		if pkt := env.GetPacket(); pkt != nil {
-			id := fmt.Sprintf("%08x", pkt.GetFrom())
-			if data := pkt.GetDecoded(); data != nil {
-				switch data.GetPortnum() {
-				case mpb.PortNum_TELEMETRY_APP:
-					var tm mpb.Telemetry
-					if err := proto.Unmarshal(data.GetPayload(), &tm); err == nil {
-						for _, t := range telemetryFromProto(id, &tm) {
-							store.Add(t)
-						}
-						return true
-					}
-				case mpb.PortNum_NODEINFO_APP:
-					var ni mpb.NodeInfo
-					if err := proto.Unmarshal(data.GetPayload(), &ni); err == nil {
-						info := NodeInfo{ID: fmt.Sprintf("%08x", ni.GetNum())}
-						if u := ni.GetUser(); u != nil {
-							info.LongName = u.GetLongName()
-							info.ShortName = u.GetShortName()
-						}
-						store.SetNodeInfo(info)
-						return true
-					}
-				}
-			}
+	if d, ok := decodeProtoMessage(topic, payload); ok {
+		for _, t := range d.Telemetry {
+			store.Add(t)
 		}
-	}
-
-	// MapReport is published directly without ServiceEnvelope.
-	var mr pproto.MapReport
-	if err := proto.Unmarshal(payload, &mr); err == nil {
-		if id, ok := nodeIDFromTopic(topic); ok {
-			info := NodeInfo{ID: id, LongName: mr.GetLongName(), ShortName: mr.GetShortName(), Firmware: mr.GetFirmwareVersion()}
-			store.SetNodeInfo(info)
-			return true
+		if d.NodeInfo != nil {
+			store.SetNodeInfo(*d.NodeInfo)
 		}
+		return true
 	}
 	return false
 }
@@ -173,58 +140,18 @@ func StartMQTT(ctx context.Context, broker, topic, user, pass string, store *Sto
 	client.Publish("meshdump/welcome", 0, false, []byte("MeshDump connected"))
 
 	if t := client.Subscribe(topic, 0, func(c mqtt.Client, m mqtt.Message) {
-
-		var tel Telemetry
-		if err := json.Unmarshal(m.Payload(), &tel); err == nil {
-			if tel.NodeID == "" {
-				if id, ok := nodeIDFromTopic(m.Topic()); ok {
-					tel.NodeID = id
-				}
-			}
-			if tel.NodeID == "" {
-				log.Printf("mqtt: telemetry message missing node id: %s", m.Topic())
-				return
-			}
-			log.Printf("mqtt: message from %s type=%s value=%f", tel.NodeID, tel.DataType, tel.Value)
-			store.Add(tel)
+		dec, err := DecodeMessage(m.Topic(), string(m.Payload()))
+		if err != nil {
+			log.Printf("mqtt decode: %v", err)
 			return
 		}
-
-		// try to decode position messages published as JSON
-		var pos jsonPosition
-		if err := json.Unmarshal(m.Payload(), &pos); err == nil && pos.Type == "position" {
-			id := strings.TrimPrefix(pos.Sender, "!")
-			if id == "" && pos.From != 0 {
-				id = fmt.Sprintf("%08x", pos.From)
-			}
-			if id == "" {
-				if tID, ok := nodeIDFromTopic(m.Topic()); ok {
-					id = tID
-				}
-			}
-			if id == "" {
-				log.Printf("mqtt: position message missing node id: %s", m.Topic())
-				return
-			}
-			ts := time.Now()
-			if pos.Payload.Time != 0 {
-				ts = time.Unix(pos.Payload.Time, 0)
-			} else if pos.Timestamp != 0 {
-				ts = time.Unix(pos.Timestamp, 0)
-			}
-			lat := float64(pos.Payload.LatitudeI) / 1e7
-			lon := float64(pos.Payload.LongitudeI) / 1e7
-			store.Add(Telemetry{NodeID: id, DataType: "latitude", Value: lat, Timestamp: ts})
-			store.Add(Telemetry{NodeID: id, DataType: "longitude", Value: lon, Timestamp: ts})
-			return
+		for _, t := range dec.Telemetry {
+			log.Printf("mqtt: message from %s type=%s value=%f", t.NodeID, t.DataType, t.Value)
+			store.Add(t)
 		}
-
-		if decodeProto(store, m.Topic(), m.Payload()) {
-			return
+		if dec.NodeInfo != nil {
+			store.SetNodeInfo(*dec.NodeInfo)
 		}
-
-		log.Printf("mqtt decode: unknown payload")
-
 	}); t.Wait() && t.Error() != nil {
 		client.Disconnect(250)
 		return t.Error()
