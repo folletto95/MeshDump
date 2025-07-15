@@ -1,7 +1,7 @@
 package meshdump
 
 import (
-	_ "embed"
+	"embed"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -25,6 +25,7 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("/api/telemetry/", s.handleTelemetry())
 	s.mux.HandleFunc("/api/nodes", s.handleNodes)
 	s.mux.HandleFunc("/api/nodeinfo/", s.handleNodeInfo())
+	s.mux.Handle("/lib/", http.StripPrefix("/lib/", http.FileServer(http.FS(libFS))))
 	s.mux.HandleFunc("/", s.handleIndex)
 }
 
@@ -82,6 +83,9 @@ func (s *Server) handleNodeInfo() http.HandlerFunc {
 
 //go:embed web/index.html
 var indexHTML string
+
+//go:embed web/lib/*
+var libFS embed.FS
 
 func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")

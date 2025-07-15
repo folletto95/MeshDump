@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log"
 	"os"
+	"sort"
 	"sync"
 	"time"
 
@@ -23,6 +24,7 @@ type NodeInfo struct {
 	LongName  string `json:"long_name"`
 	ShortName string `json:"short_name"`
 	Firmware  string `json:"firmware"`
+	HasData   bool   `json:"has_data,omitempty"`
 }
 
 // Store keeps telemetry and node information in memory. When a database path is
@@ -31,6 +33,7 @@ type Store struct {
 	mu    sync.Mutex
 	data  map[string][]Telemetry
 	nodes map[string]NodeInfo
+	order []string
 	file  string
 	debug bool
 	db    *sql.DB
@@ -43,6 +46,7 @@ func NewStore(path string) *Store {
 	s := &Store{
 		data:  make(map[string][]Telemetry),
 		nodes: make(map[string]NodeInfo),
+		order: []string{},
 		file:  path,
 		debug: os.Getenv("DEBUG") != "" && os.Getenv("DEBUG") != "0",
 	}
@@ -70,6 +74,7 @@ func (s *Store) Add(t Telemetry) {
 	s.data[t.NodeID] = append(s.data[t.NodeID], t)
 	if _, ok := s.nodes[t.NodeID]; !ok {
 		s.nodes[t.NodeID] = NodeInfo{ID: t.NodeID}
+		s.order = append(s.order, t.NodeID)
 		if s.db != nil {
 			_, _ = s.db.Exec("INSERT OR IGNORE INTO nodes (node_id, long_name, short_name, firmware) VALUES (?, '', '', '')", t.NodeID)
 		}
@@ -105,8 +110,10 @@ func (s *Store) All() map[string][]Telemetry {
 func (s *Store) Nodes() []NodeInfo {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	out := make([]NodeInfo, 0, len(s.nodes))
-	for _, n := range s.nodes {
+	out := make([]NodeInfo, 0, len(s.order))
+	for _, id := range s.order {
+		n := s.nodes[id]
+		n.HasData = len(s.data[id]) > 0
 		out = append(out, n)
 	}
 	return out
@@ -116,6 +123,9 @@ func (s *Store) Nodes() []NodeInfo {
 func (s *Store) SetNodeInfo(info NodeInfo) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if _, ok := s.nodes[info.ID]; !ok {
+		s.order = append(s.order, info.ID)
+	}
 	s.nodes[info.ID] = info
 	if s.db != nil {
 		_, _ = s.db.Exec("INSERT OR REPLACE INTO nodes (node_id, long_name, short_name, firmware) VALUES (?, ?, ?, ?)", info.ID, info.LongName, info.ShortName, info.Firmware)
@@ -132,6 +142,9 @@ func (s *Store) Node(id string) (NodeInfo, bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	n, ok := s.nodes[id]
+	if ok {
+		n.HasData = len(s.data[id]) > 0
+	}
 	return n, ok
 }
 
@@ -169,12 +182,16 @@ func (s *Store) load() error {
 	rows, err := s.db.Query("SELECT node_id, long_name, short_name, firmware FROM nodes")
 	if err == nil {
 		defer rows.Close()
+		var ids []string
 		for rows.Next() {
 			var id, long, short, fw string
 			if err := rows.Scan(&id, &long, &short, &fw); err == nil {
 				s.nodes[id] = NodeInfo{ID: id, LongName: long, ShortName: short, Firmware: fw}
+				ids = append(ids, id)
 			}
 		}
+		sort.Strings(ids)
+		s.order = append([]string(nil), ids...)
 	}
 
 	if s.debug && len(s.nodes) > 0 {

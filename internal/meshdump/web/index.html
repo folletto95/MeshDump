@@ -11,6 +11,7 @@
         #sidebar { margin-right: 20px; }
         #nodeSelect { min-width: 200px; padding: 4px; font-size: 14px; }
         #nodeList { list-style: none; padding-left: 0; margin-top: 10px; }
+        .has-data { font-weight: bold; }
     </style>
 </head>
 <body>
@@ -64,9 +65,11 @@ async function updateNodes() {
         const opt = document.createElement('option');
         opt.value = n.id;
         opt.textContent = name;
+        if (n.has_data) opt.classList.add('has-data');
         select.appendChild(opt);
         const li = document.createElement('li');
         li.textContent = name;
+        if (n.has_data) li.classList.add('has-data');
         list.appendChild(li);
     }
     if (current) {
