@@ -144,6 +144,13 @@ func StartMQTT(ctx context.Context, broker, topic, user, pass string, store *Sto
 	if t := client.Subscribe(topic, 0, func(c mqtt.Client, m mqtt.Message) {
 		dec, err := DecodeMessage(m.Topic(), string(m.Payload()))
 		if err != nil {
+			if store.debug {
+				p := string(m.Payload())
+				if len(p) > 200 {
+					p = p[:200] + "..."
+				}
+				log.Printf("debug: decode failed topic=%s payload=%q err=%v", m.Topic(), p, err)
+			}
 			log.Printf("mqtt decode: %v", err)
 			return
 		}
