@@ -44,9 +44,9 @@ async function updateNodes() {
     select.innerHTML = '';
     list.innerHTML = '';
     for (const n of nodes) {
-        const name = n.LongName || n.ShortName || n.ID;
+        const name = n.long_name || n.short_name || n.id;
         const opt = document.createElement('option');
-        opt.value = n.ID;
+        opt.value = n.id;
         opt.textContent = name;
         select.appendChild(opt);
         const li = document.createElement('li');
@@ -62,7 +62,7 @@ async function refresh() {
     const node = document.getElementById('nodeSelect').value;
     if (!node) return;
     const info = await fetchNodeInfo(node);
-    document.getElementById('nodeInfo').textContent = info.Firmware ? `Firmware: ${info.Firmware}` : '';
+    document.getElementById('nodeInfo').textContent = info.firmware ? `Firmware: ${info.firmware}` : '';
     const data = await fetchTelemetry(node);
     const groups = {};
     for (const t of data) {
@@ -91,7 +91,7 @@ async function init() {
     select.addEventListener('change', refresh);
     const nodes = await updateNodes();
     if (nodes.length) {
-        select.value = nodes[0].ID;
+        select.value = nodes[0].id;
         refresh();
         setInterval(refresh, 30000);
     }
