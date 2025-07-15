@@ -43,3 +43,7 @@ running it outside of the source tree.
 
 Run `./build.sh` on a Linux machine with Docker installed. The script compiles
 a self-contained Windows binary named `MeshDump.exe` using a Go Docker image.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
