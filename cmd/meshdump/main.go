@@ -54,6 +54,8 @@ func loadEnv() {
 func main() {
 	loadEnv()
 
+	log.Printf("MeshDump version %s", meshdump.Version)
+
 	dataFile := os.Getenv("DATA_FILE")
 	log.Printf("config: data file=%s", dataFile)
 	store := meshdump.NewStore(dataFile)

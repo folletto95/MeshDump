@@ -12,10 +12,21 @@ build() {
         output="MeshDump.exe"
     fi
 
+    version_file="VERSION"
+    if [ ! -f "$version_file" ]; then
+        echo "0.0" > "$version_file"
+    fi
+    version=$(cat "$version_file")
+    major=${version%%.*}
+    minor=${version#*.}
+    minor=$((minor + 1))
+    new_version="$major.$minor"
+    echo "$new_version" > "$version_file"
+
     echo "Building $os/$arch binary using Docker..."
     docker run --rm -v "$PWD":/src -w /src golang:1.23 \
         sh -c "go mod tidy && \
-        GOOS=$os GOARCH=$arch go build -buildvcs=false -o $output ./cmd/meshdump"
+        GOOS=$os GOARCH=$arch go build -ldflags '-X meshdump/internal/meshdump.Version=$new_version' -buildvcs=false -o $output ./cmd/meshdump"
 
     echo "Binary available at $output"
 }

@@ -25,6 +25,7 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("/api/telemetry/", s.handleTelemetry())
 	s.mux.HandleFunc("/api/nodes", s.handleNodes)
 	s.mux.HandleFunc("/api/nodeinfo/", s.handleNodeInfo())
+	s.mux.HandleFunc("/api/version", s.handleVersion)
 	s.mux.Handle("/lib/", http.StripPrefix("/lib/", http.FileServer(http.FS(libFS))))
 	s.mux.HandleFunc("/", s.handleIndex)
 }
@@ -86,6 +87,13 @@ func (s *Server) handleNodeInfo() http.HandlerFunc {
 		default:
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		}
+	}
+}
+
+func (s *Server) handleVersion(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain")
+	if _, err := io.WriteString(w, Version); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 

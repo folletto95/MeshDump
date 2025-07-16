@@ -28,6 +28,7 @@
     <h1>MeshDump Telemetry</h1>
     <pre id="nodeInfo" style="background:#f4f4f4;padding:10px;border:1px solid #ccc;overflow:auto"></pre>
     <canvas id="chart" width="600" height="400"></canvas>
+    <div id="version" style="color:#666;margin-top:10px;"></div>
     </div>
   </div>
 <script>
@@ -127,6 +128,9 @@ async function init() {
     const typeSelect = document.getElementById('dataTypeSelect');
     select.addEventListener('change', refresh);
     typeSelect.addEventListener('change', refresh);
+    fetch('/api/version').then(r => r.text()).then(v => {
+        document.getElementById('version').textContent = 'Version ' + v;
+    });
     const nodes = await updateNodes();
     if (nodes.length) {
         select.value = nodes[0].id;
