@@ -82,6 +82,7 @@ Linux and Windows binaries for the given architecture in one go, e.g.
 `./build.sh all` or `./build.sh all all`.
 
 The script also commits the generated binaries to the Git repository
+
 and pushes them if a remote is configured. If `user.name` or
 `user.email` are not configured locally, the script sets them using the
 `GIT_USER_NAME` and `GIT_USER_EMAIL` environment variables (configured

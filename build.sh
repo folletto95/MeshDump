@@ -24,6 +24,7 @@ echo "$new_version" > "$version_file"
 # track built binaries so we can commit them later
 built_files=""
 
+
 # ensure git author identity is set using environment variables when available
 GIT_USER_EMAIL=${GIT_USER_EMAIL:-builder@example.com}
 GIT_USER_NAME=${GIT_USER_NAME:-MeshDump Builder}
@@ -85,7 +86,9 @@ fi
 
 # automatically commit and push the built binaries and version file
 if [ -n "$built_files" ]; then
+
     # shellcheck disable=SC2086 # built_files is intentionally unquoted
+
     git add "$version_file" $built_files
     git commit -m "Add compiled binaries for version $new_version"
     if git remote | grep -q .; then
