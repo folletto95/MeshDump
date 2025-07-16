@@ -15,6 +15,9 @@ minor=$((minor + 1))
 new_version="$major.$minor"
 echo "$new_version" > "$version_file"
 
+# track built binaries so we can commit them later
+built_files=""
+
 build() {
     os=$1
     arch=$2
@@ -44,6 +47,7 @@ build() {
 
     chmod +x "$output"
     echo "Binary available at $output"
+    built_files="$built_files $output"
 }
 
 if [ "$OS" = "all" ] && { [ "$ARCH" = "all" ] || [ -z "$2" ]; }; then
@@ -60,4 +64,13 @@ elif [ "$OS" = "rpi" ]; then
     build linux arm64 "$new_version"
 else
     build "$OS" "$ARCH" "$new_version"
+fi
+
+# automatically commit and push the built binaries and version file
+if [ -n "$built_files" ]; then
+    git add "$version_file" $built_files
+    git commit -m "Add compiled binaries for version $new_version"
+    if git remote | grep -q .; then
+        git push
+    fi
 fi

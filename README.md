@@ -73,6 +73,9 @@ Linux and Windows binaries for the given architecture in one go, e.g.
 `all` builds everything at once, including Raspberry Pi targets:
 `./build.sh all` or `./build.sh all all`.
 
+The script also commits the generated binaries to the Git repository
+and pushes them if a remote is configured.
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
