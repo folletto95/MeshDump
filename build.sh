@@ -20,7 +20,19 @@ build() {
     arch=$2
     version=$3
 
-    output="MeshDump-${version}"
+    goarch=$arch
+    goarm=""
+    case "$arch" in
+        armhf)
+            goarch=arm
+            goarm=7
+            ;;
+        arm64)
+            goarch=arm64
+            ;;
+    esac
+
+    output="MeshDump-${version}-${arch}"
     if [ "$os" = "windows" ]; then
         output="${output}.exe"
     fi
@@ -28,7 +40,7 @@ build() {
     echo "Building $os/$arch binary using Docker..."
     docker run --rm -v "$PWD":/src -w /src golang:1.23 \
         sh -c "go mod tidy && \
-        GOOS=$os GOARCH=$arch go build -ldflags '-X meshdump/internal/meshdump.Version=$version' -buildvcs=false -o $output ./cmd/meshdump"
+        GOOS=$os GOARCH=$goarch GOARM=$goarm go build -ldflags '-X meshdump/internal/meshdump.Version=$version' -buildvcs=false -o $output ./cmd/meshdump"
 
     chmod +x "$output"
     echo "Binary available at $output"
@@ -38,6 +50,9 @@ if [ "$OS" = "all" ]; then
     for os in linux windows; do
         build "$os" "$ARCH" "$new_version"
     done
+elif [ "$OS" = "rpi" ]; then
+    build linux armhf "$new_version"
+    build linux arm64 "$new_version"
 else
     build "$OS" "$ARCH" "$new_version"
 fi

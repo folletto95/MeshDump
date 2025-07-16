@@ -68,10 +68,31 @@ func main() {
 	}
 	mqttUser := os.Getenv("MQTT_USERNAME")
 	mqttPass := os.Getenv("MQTT_PASSWORD")
+	mqttMode := os.Getenv("MQTT_SERVER")
 	log.Printf("config: mqtt broker=%s topic=%s", mqttBroker, mqttTopic)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+	if mqttMode == "internal" {
+		addr := os.Getenv("MQTT_ADDRESS")
+		if addr == "" {
+			addr = ":1883"
+		}
+		user := mqttUser
+		if user == "" {
+			user = "meshdump"
+		}
+		pass := mqttPass
+		if pass == "" {
+			pass = "meshdump"
+		}
+		if err := meshdump.StartMQTTServer(ctx, addr, user, pass); err != nil {
+			log.Fatalf("mqtt server: %v", err)
+		}
+		if mqttBroker == "" {
+			mqttBroker = "tcp://localhost" + addr
+		}
+	}
 	if mqttBroker != "" {
 		if err := meshdump.StartMQTT(ctx, mqttBroker, mqttTopic, mqttUser, mqttPass, store); err != nil {
 			log.Fatalf("mqtt: %v", err)
