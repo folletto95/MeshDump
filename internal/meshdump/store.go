@@ -181,7 +181,11 @@ func (s *Store) load() error {
 	// load nodes
 	rows, err := s.db.Query("SELECT node_id, long_name, short_name, firmware FROM nodes")
 	if err == nil {
-		defer rows.Close()
+		defer func() {
+			if cerr := rows.Close(); cerr != nil {
+				log.Printf("store: rows close: %v", cerr)
+			}
+		}()
 		var ids []string
 		for rows.Next() {
 			var id, long, short, fw string
@@ -201,7 +205,11 @@ func (s *Store) load() error {
 	// load telemetry
 	trows, err := s.db.Query("SELECT node_id, data_type, value, timestamp FROM telemetry")
 	if err == nil {
-		defer trows.Close()
+		defer func() {
+			if cerr := trows.Close(); cerr != nil {
+				log.Printf("store: trows close: %v", cerr)
+			}
+		}()
 		for trows.Next() {
 			var nodeID, dtype, tsStr string
 			var val float64

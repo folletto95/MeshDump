@@ -38,14 +38,18 @@ func (s *Server) handleTelemetry() http.HandlerFunc {
 		}
 		data := s.store.Get(node)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(data)
+		if err := json.NewEncoder(w).Encode(data); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 	}
 }
 
 func (s *Server) handleNodes(w http.ResponseWriter, r *http.Request) {
 	nodes := s.store.Nodes()
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(nodes)
+	if err := json.NewEncoder(w).Encode(nodes); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 func (s *Server) handleNodeInfo() http.HandlerFunc {
@@ -71,10 +75,14 @@ func (s *Server) handleNodeInfo() http.HandlerFunc {
 			info, ok := s.store.Node(id)
 			w.Header().Set("Content-Type", "application/json")
 			if !ok {
-				w.Write([]byte("{}"))
+				if _, err := w.Write([]byte("{}")); err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+				}
 				return
 			}
-			json.NewEncoder(w).Encode(info)
+			if err := json.NewEncoder(w).Encode(info); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
 		default:
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		}
@@ -89,5 +97,7 @@ var libFS embed.FS
 
 func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	io.WriteString(w, indexHTML)
+	if _, err := io.WriteString(w, indexHTML); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }

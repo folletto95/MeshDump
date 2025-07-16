@@ -45,7 +45,9 @@ func loadEnv() {
 		if strings.HasPrefix(val, "\"") && strings.HasSuffix(val, "\"") && len(val) >= 2 {
 			val = strings.Trim(val, "\"")
 		}
-		os.Setenv(key, val)
+		if err := os.Setenv(key, val); err != nil {
+			log.Printf("loadEnv: %v", err)
+		}
 	}
 }
 
