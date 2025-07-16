@@ -142,14 +142,15 @@ func StartMQTT(ctx context.Context, broker, topic, user, pass string, store *Sto
 	client.Publish("meshdump/welcome", 0, false, []byte("MeshDump connected"))
 
 	if t := client.Subscribe(topic, 0, func(c mqtt.Client, m mqtt.Message) {
-		dec, err := DecodeMessage(m.Topic(), string(m.Payload()))
+		payload := m.Payload()
+		dec, err := DecodeMessage(m.Topic(), string(payload))
 		if err != nil {
 			if store.debug {
-				p := string(m.Payload())
-				if len(p) > 200 {
-					p = p[:200] + "..."
+				b := payload
+				if len(b) > 200 {
+					b = append(b[:200], '.', '.', '.')
 				}
-				log.Printf("debug: decode failed topic=%s payload=%q err=%v", m.Topic(), p, err)
+				log.Printf("debug: decode failed topic=%s payload=%q err=%v", m.Topic(), b, err)
 			}
 			log.Printf("mqtt decode: %v", err)
 			return
