@@ -4,6 +4,7 @@ import (
 	"embed"
 	"encoding/json"
 	"io"
+	"io/fs"
 	"net/http"
 	"strings"
 )
@@ -26,7 +27,11 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("/api/nodes", s.handleNodes)
 	s.mux.HandleFunc("/api/nodeinfo/", s.handleNodeInfo())
 	s.mux.HandleFunc("/api/version", s.handleVersion)
-	s.mux.Handle("/lib/", http.StripPrefix("/lib/", http.FileServer(http.FS(libFS))))
+	sub, err := fs.Sub(libFS, "web/lib")
+	if err != nil {
+		panic(err)
+	}
+	s.mux.Handle("/lib/", http.StripPrefix("/lib/", http.FileServer(http.FS(sub))))
 	s.mux.HandleFunc("/", s.handleIndex)
 }
 
