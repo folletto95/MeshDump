@@ -21,6 +21,9 @@ self-contained Windows binary while development and builds occur on Linux.
 
 Set `MQTT_BROKER` to the broker URL and, if required, `MQTT_USERNAME` and
 `MQTT_PASSWORD` for authentication. `MQTT_TOPIC` defaults to `#`.
+If `MQTT_SERVER` is set to `internal` the program starts an embedded MQTT broker
+listening on `MQTT_ADDRESS` (default `:1883`). Credentials default to
+`meshdump`/`meshdump` when not provided.
 Nodes appear in the interface as soon as they publish telemetry, so you do not
 need to list them ahead of time.
 
@@ -64,7 +67,10 @@ daemon running. The script compiles a binary for the specified target using a
 Go Docker image. For example `./build.sh windows amd64` builds
 `MeshDump.exe` for Windows. Passing `all` as the first argument builds both the
 Linux and Windows binaries for the given architecture in one go, e.g.
-`./build.sh all amd64`.
+`./build.sh all amd64`. Use `./build.sh rpi` to build images for Raspberry Pi
+(armhf and arm64, excluding armv6). Omitting the architecture when using
+`all` builds everything at once, including Raspberry Pi targets:
+`./build.sh all` or `./build.sh all all`.
 
 ## License
 
