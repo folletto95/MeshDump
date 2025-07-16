@@ -1,6 +1,12 @@
 #!/bin/sh
 set -e
 
+# load environment variables from .env if present
+if [ -f .env ]; then
+    # shellcheck disable=SC1091
+    . ./.env
+fi
+
 OS=${1:-linux}
 ARCH=${2:-amd64}
 
@@ -18,12 +24,15 @@ echo "$new_version" > "$version_file"
 # track built binaries so we can commit them later
 built_files=""
 
-# ensure git author identity is set
+# ensure git author identity is set using environment variables when available
+GIT_USER_EMAIL=${GIT_USER_EMAIL:-builder@example.com}
+GIT_USER_NAME=${GIT_USER_NAME:-MeshDump Builder}
+
 if ! git config user.email >/dev/null; then
-    git config user.email "builder@example.com"
+    git config user.email "$GIT_USER_EMAIL"
 fi
 if ! git config user.name >/dev/null; then
-    git config user.name "MeshDump Builder"
+    git config user.name "$GIT_USER_NAME"
 fi
 
 build() {
