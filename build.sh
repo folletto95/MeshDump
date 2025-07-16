@@ -46,7 +46,12 @@ build() {
     echo "Binary available at $output"
 }
 
-if [ "$OS" = "all" ]; then
+if [ "$OS" = "all" ] && { [ "$ARCH" = "all" ] || [ -z "$2" ]; }; then
+    build linux amd64 "$new_version"
+    build windows amd64 "$new_version"
+    build linux armhf "$new_version"
+    build linux arm64 "$new_version"
+elif [ "$OS" = "all" ]; then
     for os in linux windows; do
         build "$os" "$ARCH" "$new_version"
     done
