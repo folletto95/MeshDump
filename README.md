@@ -68,6 +68,7 @@ Go Docker image. For example `./build.sh windows amd64` builds
 `MeshDump.exe` for Windows. Passing `all` as the first argument builds both the
 Linux and Windows binaries for the given architecture in one go, e.g.
 `./build.sh all amd64`. Use `./build.sh rpi` to build images for Raspberry Pi
+
 (armhf and arm64, excluding armv6). Omitting the architecture when using
 `all` builds everything at once, including Raspberry Pi targets:
 `./build.sh all` or `./build.sh all all`.
