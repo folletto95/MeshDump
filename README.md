@@ -36,7 +36,8 @@ telemetry for a node grouped under this identifier. The `nodes` table uses
 measurements for the same node can be efficiently queried.
 
 Set `DEBUG=1` to print additional information, including the list of nodes and
-their names, to the terminal.
+their names, to the terminal. Failed MQTT decode attempts are also logged with
+the topic and a truncated payload.
 
 
 
