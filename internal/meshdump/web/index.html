@@ -74,6 +74,10 @@ async function updateNodes() {
         const li = document.createElement('li');
         li.textContent = name;
         if (n.has_data) li.classList.add('has-data');
+        li.addEventListener('click', () => {
+            select.value = n.id;
+            refresh();
+        });
         list.appendChild(li);
     }
     if (current) {
