@@ -49,6 +49,14 @@ looks in the current working directory and then in the directory containing the
 executable. This lets you keep the configuration next to the binary when
 running it outside of the source tree.
 
+Two optional variables control the Git identity used by `build.sh` when
+committing build artifacts:
+
+```
+GIT_USER_NAME="MeshDump Builder"
+GIT_USER_EMAIL=builder@example.com
+```
+
 
 ## Parsing logs
 
@@ -74,7 +82,12 @@ Linux and Windows binaries for the given architecture in one go, e.g.
 `./build.sh all` or `./build.sh all all`.
 
 The script also commits the generated binaries to the Git repository
-and pushes them if a remote is configured.
+
+and pushes them if a remote is configured. If `user.name` or
+`user.email` are not configured locally, the script sets them using the
+`GIT_USER_NAME` and `GIT_USER_EMAIL` environment variables (configured
+in `.env`). If those variables are absent, a default identity is used so
+the commit succeeds.
 
 ## License
 
