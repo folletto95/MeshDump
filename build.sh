@@ -7,11 +7,6 @@ ARCH=${2:-amd64}
 build() {
     os=$1
     arch=$2
-    output="MeshDump"
-    if [ "$os" = "windows" ]; then
-        output="MeshDump.exe"
-    fi
-
     version_file="VERSION"
     if [ ! -f "$version_file" ]; then
         echo "0.0" > "$version_file"
@@ -22,6 +17,11 @@ build() {
     minor=$((minor + 1))
     new_version="$major.$minor"
     echo "$new_version" > "$version_file"
+
+    output="MeshDump-${new_version}"
+    if [ "$os" = "windows" ]; then
+        output="${output}.exe"
+    fi
 
     echo "Building $os/$arch binary using Docker..."
     docker run --rm -v "$PWD":/src -w /src golang:1.23 \
