@@ -81,3 +81,14 @@ func TestDecodeMessageProtoPosition(t *testing.T) {
 		t.Errorf("unexpected node id: %s", dec.Telemetry[0].NodeID)
 	}
 }
+func TestDecodeMessageJSONUppercase(t *testing.T) {
+	tel := Telemetry{NodeID: "ABCDEF12", DataType: "temperature", Value: 1}
+	data, _ := json.Marshal(tel)
+	dec, err := DecodeMessage("msh/abcdef12", string(data))
+	if err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if dec.Telemetry[0].NodeID != "abcdef12" {
+		t.Errorf("expected lowercase id, got %s", dec.Telemetry[0].NodeID)
+	}
+}

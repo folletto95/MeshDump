@@ -45,6 +45,8 @@ func decodeJSON(topic string, data []byte) (*Decoded, bool) {
 			if id, ok := nodeIDFromTopic(topic); ok {
 				tel.NodeID = id
 			}
+		} else {
+			tel.NodeID = strings.ToLower(tel.NodeID)
 		}
 		if tel.NodeID != "" {
 			return &Decoded{Telemetry: []Telemetry{tel}}, true
@@ -65,6 +67,7 @@ func decodeJSON(topic string, data []byte) (*Decoded, bool) {
 		if id == "" {
 			return nil, false
 		}
+		id = strings.ToLower(id)
 		ts := time.Now()
 		if pos.Payload.Time != 0 {
 			ts = time.Unix(pos.Payload.Time, 0)
