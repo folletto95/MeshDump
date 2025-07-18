@@ -57,6 +57,19 @@ GIT_USER_NAME="MeshDump Builder"
 GIT_USER_EMAIL=builder@example.com
 ```
 
+Three more variables let `build.sh` push without prompting for credentials by
+configuring the Git remote automatically:
+
+```
+GITHUB_USER=your_username
+GITHUB_TOKEN=your_personal_token
+REPOSITORY=your_repository
+```
+
+When all three are set, the script sets the remote URL to
+`https://${GITHUB_TOKEN}@github.com/${GITHUB_USER}/${REPOSITORY}.git` before
+running `git push`.
+
 
 ## Parsing logs
 

@@ -35,6 +35,16 @@ if ! git config user.name >/dev/null; then
     git config user.name "$GIT_USER_NAME"
 fi
 
+# configure git remote using credentials from .env when available
+if [ -n "$GITHUB_USER" ] && [ -n "$GITHUB_TOKEN" ] && [ -n "$REPOSITORY" ]; then
+    remote_url="https://${GITHUB_TOKEN}@github.com/${GITHUB_USER}/${REPOSITORY}.git"
+    if git remote | grep -q origin; then
+        git remote set-url origin "$remote_url"
+    else
+        git remote add origin "$remote_url"
+    fi
+fi
+
 build() {
     os=$1
     arch=$2
